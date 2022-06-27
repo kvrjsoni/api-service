@@ -10,7 +10,7 @@ import (
 func initializeRoutes() {
 	router := gin.Default()
 	router.GET("/", defaultRoute)
-	router.GET("/token/generate", helpers.GenerateToken)
+	router.POST("/token/generate", helpers.GenerateToken)
 	router.Run(":3001")
 }
 
