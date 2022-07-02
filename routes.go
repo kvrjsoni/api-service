@@ -4,13 +4,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kvrjsoni/api-service/helpers"
+	"github.com/kvrjsoni/api-service/controllers"
+	"github.com/kvrjsoni/api-service/middleware"
 )
 
 func initializeRoutes() {
 	router := gin.Default()
 	router.GET("/", defaultRoute)
-	router.POST("/token/generate", helpers.GenerateToken)
+	router.POST("/admin/token/generate", middleware.AuthenticateAdminUser, controllers.GenerateToken)
+	router.POST("/admin/token/revoke", middleware.AuthenticateAdminUser, controllers.RevokeToken)
 	router.Run(":3001")
 }
 

@@ -13,5 +13,15 @@ func ConnectDatabase() {
 	if err != nil {
 		panic("Failed to connect to database!")
 	}
+
+	autoMigrateError := db.AutoMigrate(
+		&AdminUser{},
+		&Token{},
+	)
+
+	if autoMigrateError != nil {
+		panic("Failed to automigrate database tables")
+	}
+
 	DB = db
 }
