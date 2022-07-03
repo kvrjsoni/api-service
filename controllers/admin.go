@@ -37,7 +37,7 @@ func GenerateToken(c *gin.Context) {
 
 // POST /admin/token/revoke
 func RevokeToken(c *gin.Context) {
-	var revokeTokenInput models.RevokeTokenInput
+	var revokeTokenInput models.TokenInput
 	// Validate request body
 	if err := c.ShouldBindJSON(&revokeTokenInput); err != nil {
 		// TODO - add error logging here

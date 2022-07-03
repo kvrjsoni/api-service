@@ -15,6 +15,7 @@ func initializeRoutes() {
 	router.POST("/admin/token/revoke", middleware.AuthenticateAdminUser, controllers.RevokeToken)
 	router.GET("/admin/tokens", middleware.AuthenticateAdminUser, controllers.ListAllTokens)
 	router.POST("/client/login", middleware.AuthenticateClientUser, controllers.ClientLogin)
+	router.POST("/client/token/validate", controllers.ValidateToken)
 	router.Run(":3001")
 }
 

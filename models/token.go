@@ -22,7 +22,7 @@ type CreateTokenInput struct {
 	ClientName string `json:"client_name" binding:"required"`
 }
 
-type RevokeTokenInput struct {
+type TokenInput struct {
 	Token string `json:"token" binding:"required"`
 }
 
@@ -68,27 +68,45 @@ func CreateNewToken(createTokenInput CreateTokenInput) CreateTokenReturnStruct {
 }
 
 func RevokeToken(token string) TokenReturnStruct {
-	var tokenDetails Token
-	DB.Where("token = ?", token).Find(&tokenDetails)
-
-	updateTokenDetails := map[string]interface{}{
-		"expire_at":  time.Now(),
-		"updated_at": time.Now(),
-		"status":     false,
-	}
-	var dbUpdateError error = nil
-	query := DB.Debug().Model(&tokenDetails).Where("token = ?", token).Omit("id", "created_at", "deleted_at").Updates(updateTokenDetails)
-
-	if dbError := query.Error; dbError != nil {
-		fmt.Println("Error while revoking the template", dbError.Error())
-		dbUpdateError = dbError
+	var tokenDetails, tokenDetailsToBeRevoked Token
+	tokenDetailsStruct := GetActiveTokenDetails()
+	tokenDetailsFromDb := tokenDetailsStruct.Value
+	tokenId := 0
+	for _, tokenData := range tokenDetailsFromDb {
+		// checking the token against all the active, non-expired tokens
+		if err := bcrypt.CompareHashAndPassword([]byte(tokenData.Token), []byte(token)); err == nil {
+			tokenId = int(tokenData.ID)
+			tokenDetailsToBeRevoked = tokenData
+			break
+		}
 	}
 
-	createTokenReturnData := TokenReturnStruct{
-		Value: tokenDetails,
-		Error: dbUpdateError,
+	if tokenId != 0 {
+		updateTokenDetails := map[string]interface{}{
+			"id":          tokenDetailsToBeRevoked.ID,
+			"token":       tokenDetailsToBeRevoked.Token,
+			"status":      false,
+			"client_name": tokenDetailsToBeRevoked.ClientName,
+			"expire_at":   time.Now(),
+			"created_at":  tokenDetailsToBeRevoked.CreatedAt,
+			"updated_at":  time.Now(),
+		}
+
+		var dbUpdateError error = nil
+		query := DB.Debug().Model(&tokenDetails).Where("id = ?", tokenId).Updates(updateTokenDetails)
+
+		if dbError := query.Error; dbError != nil {
+			fmt.Println("Error while revoking the template", dbError.Error())
+			dbUpdateError = dbError
+		}
+
+		createTokenReturnData := TokenReturnStruct{
+			Value: tokenDetails,
+			Error: dbUpdateError,
+		}
+		return createTokenReturnData
 	}
-	return createTokenReturnData
+	return TokenReturnStruct{}
 }
 
 func GetAllTokens() TokensReturnStruct {
