@@ -8,9 +8,15 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	dsn := "kvrjsoni:nua@123@tcp(127.0.0.1:3306)/api_service?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	dbUserName := "kvrjsoni"
+	dbPassword := "nua@123"
+	dbHost := "127.0.0.1"
+	dbPort := "3306"
+	dbName := "api_service"
+	dsnString := (dbUserName + ":" + dbPassword + "@tcp(" + dbHost + ":" + dbPort + ")/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local")
+	db, err := gorm.Open(mysql.Open(dsnString), &gorm.Config{})
 	if err != nil {
+		// exit is db connection is not made
 		panic("Failed to connect to database!")
 	}
 
