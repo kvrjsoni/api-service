@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kvrjsoni/api-service/helpers"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Token struct {
@@ -25,6 +26,12 @@ type RevokeTokenInput struct {
 	Token string `json:"token" binding:"required"`
 }
 
+type CreateTokenReturnStruct struct {
+	Value Token
+	Token string
+	Error error
+}
+
 type TokenReturnStruct struct {
 	Value Token
 	Error error
@@ -35,15 +42,16 @@ type TokensReturnStruct struct {
 	Error error
 }
 
-func CreateNewToken(createTokenInput CreateTokenInput) TokenReturnStruct {
+func CreateNewToken(createTokenInput CreateTokenInput) CreateTokenReturnStruct {
+	token := helpers.GenerateSecureToken(12)
+	tokenHashed := helpers.GenerateTokenHash(token)
 	tokenDetails := Token{
-		Token:      helpers.GenerateSecureToken(12),
+		Token:      tokenHashed,
 		Status:     true,
 		ClientName: createTokenInput.ClientName,
 		ExpireAt:   helpers.AddDaysToCurrentTime(30),
 	}
 
-	fmt.Printf("%+v\n", tokenDetails)
 	var dbCreateError error = nil
 
 	if dbc := DB.Create(&tokenDetails); dbc.Error != nil {
@@ -51,8 +59,9 @@ func CreateNewToken(createTokenInput CreateTokenInput) TokenReturnStruct {
 		dbCreateError = dbc.Error
 	}
 
-	createTokenReturnData := TokenReturnStruct{
+	createTokenReturnData := CreateTokenReturnStruct{
 		Value: tokenDetails,
+		Token: token,
 		Error: dbCreateError,
 	}
 	return createTokenReturnData
@@ -63,6 +72,7 @@ func RevokeToken(token string) TokenReturnStruct {
 	DB.Where("token = ?", token).Find(&tokenDetails)
 
 	updateTokenDetails := map[string]interface{}{
+		"expire_at":  time.Now(),
 		"updated_at": time.Now(),
 		"status":     false,
 	}
@@ -93,4 +103,30 @@ func GetAllTokens() TokensReturnStruct {
 		Value: tokenDetails,
 		Error: listTokenError,
 	}
+}
+
+func GetActiveTokenDetails() TokensReturnStruct {
+	var tokenDetails []Token
+	var listTokenError error = nil
+
+	if listTokens := DB.Debug().Where("status = ? ", true).Where("expire_at > ? ", time.Now()).Find(&tokenDetails); listTokens.Error != nil {
+		listTokenError = listTokens.Error
+	}
+
+	return TokensReturnStruct{
+		Value: tokenDetails,
+		Error: listTokenError,
+	}
+}
+
+func IsTokenValid(token string) bool {
+	tokenDetailsStruct := GetActiveTokenDetails()
+	tokenDetails := tokenDetailsStruct.Value
+	for _, tokenData := range tokenDetails {
+		// checking the token against all the active, non-expired tokens
+		if err := bcrypt.CompareHashAndPassword([]byte(tokenData.Token), []byte(token)); err == nil {
+			return true
+		}
+	}
+	return false
 }

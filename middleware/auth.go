@@ -12,6 +12,7 @@ import (
 )
 
 func AuthenticateAdminUser(c *gin.Context) {
+	// TODO - add index check to prevent index out of range error
 	basicAuthHeaderValue := c.Request.Header["Authorization"][0]
 	basicAuthTrimmed := strings.Replace(basicAuthHeaderValue, "Basic ", "", -1)
 	originalDetails, err := base64.StdEncoding.DecodeString(basicAuthTrimmed)
@@ -36,4 +37,17 @@ func isPasswordValid(userNameFromAPI string, passwordFromAPI string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(loginData.PasswordHash), []byte(passwordFromAPI))
 	fmt.Println(err) // nil means it is a match
 	return err == nil
+}
+
+func AuthenticateClientUser(c *gin.Context) {
+	// TODO - add index check to prevent index out of range error
+	xApiKey := c.Request.Header["X-Api-Key"][0]
+	isTokenValid := models.IsTokenValid(xApiKey)
+	if !isTokenValid {
+		// TODO - add logs here to capture unauthorized accesses
+		c.Abort()
+		c.Writer.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
+		helpers.DefaultApiResponseObject(c, 401, gin.H{"error": "login_failed"})
+		return
+	}
 }

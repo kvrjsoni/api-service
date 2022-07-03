@@ -32,7 +32,7 @@ func GenerateToken(c *gin.Context) {
 		fmt.Println("error while generating token: ", errCreateToken.Error())
 		helpers.DefaultApiResponseObject(c, http.StatusInternalServerError, gin.H{"error": errCreateToken.Error()})
 	}
-	helpers.DefaultApiResponseObject(c, http.StatusOK, gin.H{"data": createTokenResult.Value.Token})
+	helpers.DefaultApiResponseObject(c, http.StatusOK, gin.H{"data": createTokenResult.Token})
 }
 
 // POST /admin/token/revoke
