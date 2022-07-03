@@ -14,7 +14,7 @@ type Token struct {
 	ClientName string    `json:"client_name"`
 	ExpireAt   time.Time `json:"expire_at"`
 	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type CreateTokenInput struct {
@@ -27,6 +27,11 @@ type RevokeTokenInput struct {
 
 type TokenReturnStruct struct {
 	Value Token
+	Error error
+}
+
+type TokensReturnStruct struct {
+	Value []Token
 	Error error
 }
 
@@ -74,4 +79,18 @@ func RevokeToken(token string) TokenReturnStruct {
 		Error: dbUpdateError,
 	}
 	return createTokenReturnData
+}
+
+func GetAllTokens() TokensReturnStruct {
+	var tokenDetails []Token
+	var listTokenError error = nil
+
+	if listTokens := DB.Debug().Find(&tokenDetails); listTokens.Error != nil {
+		listTokenError = listTokens.Error
+	}
+
+	return TokensReturnStruct{
+		Value: tokenDetails,
+		Error: listTokenError,
+	}
 }

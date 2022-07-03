@@ -13,6 +13,7 @@ func initializeRoutes() {
 	router.GET("/", defaultRoute)
 	router.POST("/admin/token/generate", middleware.AuthenticateAdminUser, controllers.GenerateToken)
 	router.POST("/admin/token/revoke", middleware.AuthenticateAdminUser, controllers.RevokeToken)
+	router.GET("/admin/tokens", middleware.AuthenticateAdminUser, controllers.ListAllTokens)
 	router.Run(":3001")
 }
 

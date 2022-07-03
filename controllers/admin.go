@@ -10,7 +10,7 @@ import (
 	"github.com/kvrjsoni/api-service/models"
 )
 
-// /admin/token/generate
+// POST /admin/token/generate
 func GenerateToken(c *gin.Context) {
 	var createTokenInput models.CreateTokenInput
 	// Validate request body
@@ -35,7 +35,7 @@ func GenerateToken(c *gin.Context) {
 	helpers.DefaultApiResponseObject(c, http.StatusOK, gin.H{"data": createTokenResult.Value.Token})
 }
 
-// /admin/token/revoke
+// POST /admin/token/revoke
 func RevokeToken(c *gin.Context) {
 	var revokeTokenInput models.RevokeTokenInput
 	// Validate request body
@@ -61,4 +61,14 @@ func RevokeToken(c *gin.Context) {
 	}
 	helpers.DefaultApiResponseObject(c, http.StatusOK, gin.H{"data": revokeTokenResult.Value})
 
+}
+
+// GET /admin/tokens
+func ListAllTokens(c *gin.Context) {
+	revokeTokenResult := models.GetAllTokens()
+	if errRevokeToken := revokeTokenResult.Error; errRevokeToken != nil {
+		fmt.Println("error while revoking token: ", errRevokeToken.Error())
+		helpers.DefaultApiResponseObject(c, http.StatusInternalServerError, gin.H{"error": errRevokeToken.Error()})
+	}
+	helpers.DefaultApiResponseObject(c, http.StatusOK, gin.H{"data": revokeTokenResult.Value})
 }
