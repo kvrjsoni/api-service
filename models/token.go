@@ -8,20 +8,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// creates the `tokens` which will store all client token related data
 type Token struct {
 	ID         uint      `json:"id"`
 	Token      string    `json:"token"`
-	Status     bool      `json:"status"`
+	IsActive   bool      `json:"is_active"`
 	ClientName string    `json:"client_name"`
 	ExpireAt   time.Time `json:"expire_at"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+// used to accept input for generate token API
 type CreateTokenInput struct {
 	ClientName string `json:"client_name" binding:"required"`
 }
 
+// used to accept input for revoke token, validate token
 type TokenInput struct {
 	Token string `json:"token" binding:"required"`
 }
@@ -42,12 +45,13 @@ type TokensReturnStruct struct {
 	Error error
 }
 
+// creates a new token for a client and stores the token hash in the db
 func CreateNewToken(createTokenInput CreateTokenInput) CreateTokenReturnStruct {
 	token := helpers.GenerateSecureToken(12)
 	tokenHashed := helpers.GenerateTokenHash(token)
 	tokenDetails := Token{
 		Token:      tokenHashed,
-		Status:     true,
+		IsActive:   true,
 		ClientName: createTokenInput.ClientName,
 		ExpireAt:   helpers.AddDaysToCurrentTime(30),
 	}
@@ -67,6 +71,7 @@ func CreateNewToken(createTokenInput CreateTokenInput) CreateTokenReturnStruct {
 	return createTokenReturnData
 }
 
+// finds the token to be revoked and marks the token status as inactive
 func RevokeToken(token string) TokenReturnStruct {
 	var tokenDetails, tokenDetailsToBeRevoked Token
 	tokenDetailsStruct := GetActiveTokenDetails()
@@ -85,7 +90,7 @@ func RevokeToken(token string) TokenReturnStruct {
 		updateTokenDetails := map[string]interface{}{
 			"id":          tokenDetailsToBeRevoked.ID,
 			"token":       tokenDetailsToBeRevoked.Token,
-			"status":      false,
+			"is_active":   false,
 			"client_name": tokenDetailsToBeRevoked.ClientName,
 			"expire_at":   time.Now(),
 			"created_at":  tokenDetailsToBeRevoked.CreatedAt,
@@ -109,6 +114,7 @@ func RevokeToken(token string) TokenReturnStruct {
 	return TokenReturnStruct{}
 }
 
+// returns all the token data from the db
 func GetAllTokens() TokensReturnStruct {
 	var tokenDetails []Token
 	var listTokenError error = nil
@@ -123,11 +129,12 @@ func GetAllTokens() TokensReturnStruct {
 	}
 }
 
+// returns all the active client tokens
 func GetActiveTokenDetails() TokensReturnStruct {
 	var tokenDetails []Token
 	var listTokenError error = nil
 
-	if listTokens := DB.Debug().Where("status = ? ", true).Where("expire_at > ? ", time.Now()).Find(&tokenDetails); listTokens.Error != nil {
+	if listTokens := DB.Debug().Where("is_active = ? ", true).Where("expire_at > ? ", time.Now()).Find(&tokenDetails); listTokens.Error != nil {
 		listTokenError = listTokens.Error
 	}
 
@@ -137,6 +144,7 @@ func GetActiveTokenDetails() TokensReturnStruct {
 	}
 }
 
+// checks if a client token is valid or not
 func IsTokenValid(token string) bool {
 	tokenDetailsStruct := GetActiveTokenDetails()
 	tokenDetails := tokenDetailsStruct.Value

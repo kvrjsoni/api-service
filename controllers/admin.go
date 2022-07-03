@@ -64,11 +64,12 @@ func RevokeToken(c *gin.Context) {
 }
 
 // GET /admin/tokens
+// TODO - add pagination for this API
 func ListAllTokens(c *gin.Context) {
-	revokeTokenResult := models.GetAllTokens()
-	if errRevokeToken := revokeTokenResult.Error; errRevokeToken != nil {
-		fmt.Println("error while revoking token: ", errRevokeToken.Error())
-		helpers.DefaultApiResponseObject(c, http.StatusInternalServerError, gin.H{"error": errRevokeToken.Error()})
+	allTokenResult := models.GetAllTokens()
+	if errGetAllTokens := allTokenResult.Error; errGetAllTokens != nil {
+		fmt.Println("error while fetching token: ", errGetAllTokens.Error())
+		helpers.DefaultApiResponseObject(c, http.StatusInternalServerError, gin.H{"error": errGetAllTokens.Error()})
 	}
-	helpers.DefaultApiResponseObject(c, http.StatusOK, gin.H{"data": revokeTokenResult.Value})
+	helpers.DefaultApiResponseObject(c, http.StatusOK, gin.H{"data": allTokenResult.Value})
 }
