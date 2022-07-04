@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kvrjsoni/api-service/controllers"
 	"github.com/kvrjsoni/api-service/middleware"
+	"github.com/kvrjsoni/api-service/util"
 )
 
 func initializeRoutes() {
@@ -16,7 +17,7 @@ func initializeRoutes() {
 	router.GET("/admin/tokens", middleware.AuthenticateAdminUser, controllers.ListAllTokens)
 	router.POST("/client/login", middleware.AuthenticateClientUser, controllers.ClientLogin)
 	router.POST("/client/token/validate", controllers.ValidateToken)
-	router.Run(":3001")
+	router.Run(":" + util.LoadEnvVariable("SERVER_PORT"))
 }
 
 func defaultRoute(c *gin.Context) {

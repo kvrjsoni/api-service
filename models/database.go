@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 
+	"github.com/kvrjsoni/api-service/util"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -11,11 +12,11 @@ var DB *gorm.DB
 
 // make a connection to the db and also creates any tables if needed
 func ConnectDatabase() bool {
-	dbUserName := "kvrjsoni"
-	dbPassword := "nua@123"
-	dbHost := "127.0.0.1"
-	dbPort := "3306"
-	dbName := "api_service"
+	dbUserName := util.LoadEnvVariable("DB_USERNAME")
+	dbPassword := util.LoadEnvVariable("DB_PASSWORD")
+	dbHost := util.LoadEnvVariable("DB_HOST")
+	dbPort := util.LoadEnvVariable("DB_PORT")
+	dbName := util.LoadEnvVariable("DB_NAME")
 	dsnString := (dbUserName + ":" + dbPassword + "@tcp(" + dbHost + ":" + dbPort + ")/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local")
 	db, err := gorm.Open(mysql.Open(dsnString), &gorm.Config{})
 	if err != nil {
